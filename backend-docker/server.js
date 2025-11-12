@@ -107,7 +107,13 @@ app.use(passport.session());
 
 // CORS - Permitir conexiones desde Android
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://10.0.2.2:3000', 'http://192.168.1.*'],
+    origin: [
+        'http://localhost:3000', 
+        'http://10.0.2.2:3000', 
+        'http://192.168.1.*',
+        'https://mirutinavisual-backend-route-msazol1-dev.apps.rm2.thpm.p1.openshiftapps.com',
+        /\.apps\.rm2\.thpm\.p1\.openshiftapps\.com$/
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
