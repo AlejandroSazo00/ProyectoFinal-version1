@@ -75,6 +75,9 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use(helmet());
 app.use(morgan('combined'));
 
+// Configurar trust proxy ANTES del rate limiting
+app.set('trust proxy', 1);
+
 // Rate limiting para prevenir ataques de fuerza bruta
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
@@ -85,7 +88,15 @@ const limiter = rateLimit({
         retryAfter: '15 minutos'
     },
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    // Arreglo para OpenShift proxy headers
+    keyGenerator: (req) => {
+        return req.ip || req.connection.remoteAddress || 'unknown';
+    },
+    skip: (req) => {
+        // Saltar rate limiting para requests locales
+        return req.ip === '127.0.0.1' || req.ip === '::1';
+    }
 });
 
 app.use(limiter);
