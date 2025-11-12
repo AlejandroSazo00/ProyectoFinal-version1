@@ -250,7 +250,22 @@ router.post('/login', async (req, res) => {
         
         // Validar contraseña - ARREGLO DEL BUG
         const bcrypt = require('bcrypt');
+        
+        console.log('🔍 DEBUG LOGIN:', {
+            email: email,
+            passwordLength: password.length,
+            userPasswordHash: user.password ? user.password.substring(0, 20) + '...' : 'NO_HASH',
+            userFromDB: !!user
+        });
+        
         const isValidPassword = bcrypt.compareSync(password, user.password);
+        
+        console.log('🔍 PASSWORD VALIDATION:', {
+            email: email,
+            isValid: isValidPassword,
+            providedPassword: password,
+            hashFromDB: user.password ? 'EXISTS' : 'MISSING'
+        });
         
         if (!isValidPassword) {
             console.log('❌ Contraseña incorrecta para:', email);
