@@ -38,7 +38,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: 'https://mirutinavisual-backend-route-https-msazol1-dev.apps.rm2.thpm.p1.openshiftapps.com',
+                url: 'https://mirutinavisual-backend-route-msazol1-dev.apps.rm2.thpm.p1.openshiftapps.com',
                 description: 'Servidor de producción OpenShift'
             },
             {
