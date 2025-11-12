@@ -248,7 +248,7 @@ router.post('/login', async (req, res) => {
             });
         }
         
-        // Validar contraseña - ARREGLO DEL BUG
+        // Validar contraseña - ARREGLO DEFINITIVO
         const bcrypt = require('bcrypt');
         
         console.log('🔍 DEBUG LOGIN:', {
@@ -258,7 +258,14 @@ router.post('/login', async (req, res) => {
             userFromDB: !!user
         });
         
-        const isValidPassword = bcrypt.compareSync(password, user.password);
+        // ARREGLO: Usar await para bcrypt.compare (versión async)
+        let isValidPassword = false;
+        try {
+            isValidPassword = await bcrypt.compare(password, user.password);
+        } catch (error) {
+            console.log('❌ Error en bcrypt.compare:', error);
+            isValidPassword = false;
+        }
         
         console.log('🔍 PASSWORD VALIDATION:', {
             email: email,
