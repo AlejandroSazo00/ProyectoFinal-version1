@@ -105,18 +105,36 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// CORS - Permitir conexiones desde Android
+// CORS - ARREGLO DEFINITIVO PARA SWAGGER
 app.use(cors({
-    origin: [
-        'http://localhost:3000', 
-        'http://10.0.2.2:3000', 
-        'http://192.168.1.*',
-        'https://mirutinavisual-backend-route-msazol1-dev.apps.rm2.thpm.p1.openshiftapps.com',
-        /\.apps\.rm2\.thpm\.p1\.openshiftapps\.com$/
-    ],
+    origin: function (origin, callback) {
+        // Permitir requests sin origin (como Swagger UI)
+        if (!origin) return callback(null, true);
+        
+        // Lista de orígenes permitidos
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'http://10.0.2.2:3000',
+            'https://mirutinavisual-backend-route-msazol1-dev.apps.rm2.thpm.p1.openshiftapps.com'
+        ];
+        
+        // Permitir cualquier subdominio de OpenShift
+        if (origin.includes('.apps.rm2.thpm.p1.openshiftapps.com')) {
+            return callback(null, true);
+        }
+        
+        // Verificar lista de permitidos
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            return callback(null, true);
+        }
+        
+        // Permitir por defecto (modo permisivo para debug)
+        return callback(null, true);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    optionsSuccessStatus: 200
 }));
 
 // Middleware para parsing
