@@ -147,10 +147,26 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
     customSiteTitle: 'MiRutinaVisual API Docs'
 }));
 
+// DEBUG - Verificar rutas cargadas
+console.log('🔍 Cargando rutas...');
+console.log('📁 authRoutes:', typeof authRoutes);
+console.log('📁 apiRoutes:', typeof apiRoutes);
+console.log('📁 oauthRoutes:', typeof oauthRoutes);
+
 // Rutas principales
 app.use('/auth', authRoutes);
 app.use('/api', apiRoutes);
 app.use('/oauth', oauthRoutes);
+
+// DEBUG - Ruta de prueba
+app.get('/debug/routes', (req, res) => {
+    res.json({
+        message: 'Rutas disponibles',
+        auth: '/auth/login, /auth/register, /auth/admin-login',
+        api: '/api/users, /api/all-users',
+        oauth: '/oauth/google, /oauth/status'
+    });
+});
 
 /**
  * @swagger

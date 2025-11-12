@@ -22,7 +22,8 @@ public class BackendClient {
     private static final String TAG = "BackendClient";
     
     // URL del backend Docker (cambiar según tu configuración)
-    private static final String BASE_URL = "http://10.0.2.2:3000"; // Para emulador
+    private static final String BASE_URL = "https://mirutinavisual-backend-route-https-msazol1-dev.apps.rm2.thpm.p1.openshiftapps.com"; // OpenShift
+    // private static final String BASE_URL = "http://10.0.2.2:3000"; // Para emulador local
     // private static final String BASE_URL = "http://192.168.5.235:3000"; // Tu IP real
     
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
