@@ -248,8 +248,12 @@ router.post('/login', async (req, res) => {
             });
         }
         
-        // Validar contraseña
-        if (!UserDatabase.validatePassword(user, password)) {
+        // Validar contraseña - ARREGLO DEL BUG
+        const bcrypt = require('bcrypt');
+        const isValidPassword = bcrypt.compareSync(password, user.password);
+        
+        if (!isValidPassword) {
+            console.log('❌ Contraseña incorrecta para:', email);
             return res.status(401).json({
                 success: false,
                 error: 'Contraseña incorrecta',
