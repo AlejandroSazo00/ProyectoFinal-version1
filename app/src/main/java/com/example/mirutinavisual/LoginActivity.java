@@ -25,8 +25,11 @@ public class LoginActivity extends AppCompatActivity implements TextToSpeech.OnI
     private FirebaseAuth firebaseAuth;
     
     private EditText emailEditText, passwordEditText;
-    private Button loginButton, registerButton;
+    private Button loginButton, registerButton, dockerLoginButton, dockerRegisterButton;
     private TextView titleText, subtitleText;
+    
+    // Cliente para backend Docker
+    private BackendClient backendClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +41,9 @@ public class LoginActivity extends AppCompatActivity implements TextToSpeech.OnI
         
         // Inicializar Text-to-Speech
         textToSpeech = new TextToSpeech(this, this);
+        
+        // Inicializar cliente backend Docker
+        backendClient = new BackendClient();
         
         // Verificar si ya hay usuario logueado
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
@@ -67,6 +73,8 @@ public class LoginActivity extends AppCompatActivity implements TextToSpeech.OnI
         passwordEditText = findViewById(R.id.passwordEditText);
         loginButton = findViewById(R.id.loginButton);
         registerButton = findViewById(R.id.registerButton);
+        dockerLoginButton = findViewById(R.id.dockerLoginButton);
+        dockerRegisterButton = findViewById(R.id.dockerRegisterButton);
         
         // Forzar color negro en EditText para APK
         emailEditText.setTextColor(Color.BLACK);
@@ -84,6 +92,16 @@ public class LoginActivity extends AppCompatActivity implements TextToSpeech.OnI
         registerButton.setOnClickListener(v -> {
             speakText("Registrando nuevo usuario");
             registerUser();
+        });
+
+        dockerLoginButton.setOnClickListener(v -> {
+            speakText("Conectando con backend Docker OAuth2.0");
+            testDockerConnection();
+        });
+
+        dockerRegisterButton.setOnClickListener(v -> {
+            speakText("Creando cuenta Docker");
+            registerDockerUser();
         });
 
         emailEditText.setOnFocusChangeListener((v, hasFocus) -> {
@@ -302,6 +320,155 @@ public class LoginActivity extends AppCompatActivity implements TextToSpeech.OnI
         
         startActivity(mainIntent);
         finish();
+    }
+
+    // Método para probar conexión con backend Docker
+    private void testDockerConnection() {
+        showToast("🐳 Conectando con backend Docker...");
+        
+        backendClient.checkHealth(new BackendClient.BackendCallback() {
+            @Override
+            public void onSuccess(com.google.gson.JsonObject response) {
+                runOnUiThread(() -> {
+                    showToast("✅ Backend Docker conectado!");
+                    speakText("Backend Docker conectado correctamente");
+                    
+                    // Mostrar información del servidor
+                    String message = response.get("message").getAsString();
+                    String version = response.get("version").getAsString();
+                    
+                    showToast("📡 " + message + " v" + version);
+                    
+                    // Aquí podrías abrir el navegador para OAuth o hacer login directo
+                    testDockerLogin();
+                });
+            }
+            
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> {
+                    showToast("❌ No se pudo conectar");
+                    speakText("No se pudo conectar con el servidor. Verifique su conexión a internet.");
+                });
+            }
+        });
+    }
+    
+    // Método para probar login directo con Docker
+    private void testDockerLogin() {
+        String email = emailEditText.getText().toString().trim();
+        String password = passwordEditText.getText().toString().trim();
+        
+        if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
+            showToast("⚠️ Ingresa email y contraseña para probar Docker login");
+            return;
+        }
+        
+        showToast("🔐 Probando login Docker...");
+        
+        backendClient.login(email, password, new BackendClient.BackendCallback() {
+            @Override
+            public void onSuccess(com.google.gson.JsonObject response) {
+                runOnUiThread(() -> {
+                    showToast("✅ Login Docker exitoso!");
+                    speakText("Login con Docker exitoso");
+                    
+                    // Obtener token JWT
+                    String token = response.get("token").getAsString();
+                    com.google.gson.JsonObject user = response.getAsJsonObject("user");
+                    
+                    // Guardar token en SharedPreferences
+                    SharedPreferences prefs = getSharedPreferences("MiRutinaVisual", MODE_PRIVATE);
+                    prefs.edit()
+                        .putString("docker_jwt_token", token)
+                        .putString("docker_user_email", user.get("email").getAsString())
+                        .putString("docker_user_name", user.get("name").getAsString())
+                        .putBoolean("logged_with_docker", true)
+                        .apply();
+                    
+                    showToast("🎯 Token JWT guardado. Redirigiendo...");
+                    
+                    // Ir a MainActivity
+                    navigateToMainActivity();
+                });
+            }
+            
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> {
+                    if (error.contains("no registrado") || error.contains("USER_NOT_FOUND")) {
+                        showToast("❌ Usuario no registrado");
+                        speakText("No puede conectarse. Tiene que registrarse primero. Por favor cree una cuenta Docker.");
+                    } else if (error.contains("Contraseña incorrecta")) {
+                        showToast("❌ Contraseña incorrecta");
+                        speakText("La contraseña es incorrecta. Intente de nuevo.");
+                    } else if (error.contains("Error de conexión")) {
+                        showToast("❌ Sin conexión");
+                        speakText("No se pudo conectar. Verifique su conexión a internet.");
+                    } else {
+                        showToast("❌ Error de login");
+                        speakText("Error al iniciar sesión. Intente de nuevo.");
+                    }
+                });
+            }
+        });
+    }
+    
+    // Método para registrar usuario Docker
+    private void registerDockerUser() {
+        String email = emailEditText.getText().toString().trim();
+        String password = passwordEditText.getText().toString().trim();
+        
+        if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
+            showToast("⚠️ Ingresa email y contraseña para registrarte");
+            speakText("Por favor ingresa email y contraseña");
+            return;
+        }
+        
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            showToast("⚠️ Formato de email inválido");
+            speakText("El formato del email no es válido");
+            return;
+        }
+        
+        if (password.length() < 4) {
+            showToast("⚠️ La contraseña debe tener al menos 4 caracteres");
+            speakText("La contraseña es muy corta");
+            return;
+        }
+        
+        showToast("🆕 Registrando usuario Docker...");
+        
+        // Conectar con backend Docker
+        backendClient.register(email, password, new BackendClient.BackendCallback() {
+            @Override
+            public void onSuccess(com.google.gson.JsonObject response) {
+                runOnUiThread(() -> {
+                    showToast("✅ Usuario Docker registrado exitosamente!");
+                    speakText("Usuario Docker registrado exitosamente. Ahora puede hacer login.");
+                    
+                    // Limpiar campos
+                    emailEditText.setText("");
+                    passwordEditText.setText("");
+                });
+            }
+            
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> {
+                    if (error.contains("ya está registrado") || error.contains("ya existe")) {
+                        showToast("❌ Usuario ya existe");
+                        speakText("Este usuario ya está registrado. Intente hacer login.");
+                    } else if (error.contains("Error de conexión")) {
+                        showToast("❌ Sin conexión");
+                        speakText("No se pudo conectar. Verifique su conexión a internet.");
+                    } else {
+                        showToast("❌ Error de registro");
+                        speakText("Error al registrar usuario. Intente de nuevo.");
+                    }
+                });
+            }
+        });
     }
 
     @Override

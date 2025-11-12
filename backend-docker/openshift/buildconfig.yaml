@@ -1,0 +1,38 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: mirutinavisual-backend-build
+  labels:
+    app: mirutinavisual-backend
+spec:
+  source:
+    type: Git
+    git:
+      uri: https://github.com/AlejandroSazo00/MiRutinaVisual.git
+      ref: main
+    contextDir: backend-docker
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: mirutinavisual-backend:latest
+  triggers:
+  - type: ConfigChange
+  - type: GitHub
+    github:
+      secret: mirutinavisual-webhook-secret
+  - type: ImageChange
+    imageChange: {}
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: mirutinavisual-backend
+  labels:
+    app: mirutinavisual-backend
+spec:
+  lookupPolicy:
+    local: false

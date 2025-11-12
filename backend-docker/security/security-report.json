@@ -1,0 +1,73 @@
+{
+  "timestamp": "2025-11-12T02:46:13.875Z",
+  "securityScore": 0,
+  "vulnerabilities": [
+    {
+      "type": "dependency",
+      "severity": "medium",
+      "package": "express",
+      "version": "^4.18.2",
+      "issue": "Vulnerabilidad XSS",
+      "recommendation": "Actualizar express a versión segura"
+    },
+    {
+      "type": "dependency",
+      "severity": "high",
+      "package": "jsonwebtoken",
+      "version": "^9.0.2",
+      "issue": "JWT verification bypass",
+      "recommendation": "Actualizar jsonwebtoken a versión segura"
+    },
+    {
+      "type": "dependency",
+      "severity": "low",
+      "package": "mongoose",
+      "version": "^8.19.3",
+      "issue": "Prototype pollution",
+      "recommendation": "Actualizar mongoose a versión segura"
+    },
+    {
+      "type": "weak_jwt_secret",
+      "severity": "high",
+      "issue": "JWT secret muy corto",
+      "recommendation": "Usar JWT secret de al menos 32 caracteres"
+    },
+    {
+      "type": "oauth_demo_mode",
+      "severity": "medium",
+      "issue": "OAuth2.0 en modo demo",
+      "recommendation": "Configurar credenciales reales de Google OAuth2.0"
+    },
+    {
+      "type": "database_demo_mode",
+      "severity": "medium",
+      "issue": "Base de datos en modo demo",
+      "recommendation": "Configurar MongoDB Atlas real"
+    },
+    {
+      "type": "information_disclosure",
+      "severity": "low",
+      "issue": "Headers de servidor expuestos",
+      "endpoint": "Todos",
+      "recommendation": "Usar helmet.js para ocultar headers sensibles"
+    },
+    {
+      "type": "cors_config",
+      "severity": "medium",
+      "issue": "CORS permite múltiples orígenes",
+      "recommendation": "Restringir CORS a dominios específicos en producción"
+    },
+    {
+      "type": "no_rate_limiting",
+      "severity": "medium",
+      "issue": "No hay rate limiting implementado",
+      "recommendation": "Implementar rate limiting para prevenir ataques de fuerza bruta"
+    }
+  ],
+  "summary": {
+    "total": 9,
+    "high": 2,
+    "medium": 5,
+    "low": 2
+  }
+}
