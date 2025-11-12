@@ -181,7 +181,7 @@ router.get('/test', (req, res) => {
  *                   type: string
  *                   example: NOT_ADMIN
  */
-router.get('/users', (req, res) => {
+router.get('/users', async (req, res) => {
     // VERIFICAR TOKEN OBLIGATORIO
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -196,14 +196,8 @@ router.get('/users', (req, res) => {
     
     // VERIFICAR TOKEN VÁLIDO
     const jwt = require('jsonwebtoken');
-    jwt.verify(token, process.env.JWT_SECRET || 'mirutinavisual-jwt-secret-2024', (err, user) => {
-        if (err) {
-            return res.status(403).json({
-                success: false,
-                error: 'Token inválido o expirado. Haga login nuevamente.',
-                code: 'INVALID_TOKEN'
-            });
-        }
+    try {
+        const user = jwt.verify(token, process.env.JWT_SECRET || 'mirutinavisual-jwt-secret-2024');
         
         // VERIFICAR QUE ES ADMIN
         if (user.email !== 'admin@mirutinavisual.com') {
@@ -218,9 +212,9 @@ router.get('/users', (req, res) => {
         const UserDatabase = require('../database/users');
         
         try {
-            const allUsers = UserDatabase.getAllUsers();
+            const allUsers = await UserDatabase.getAllUsers();
             const adminUsers = allUsers.filter(u => u.role === 'admin' || u.email === 'admin@mirutinavisual.com');
-            const stats = UserDatabase.getStats();
+            const stats = await UserDatabase.getStats();
             
             console.log('👑 ADMIN VE SOLO ADMINS:', {
                 admin: user.email,
@@ -250,13 +244,20 @@ router.get('/users', (req, res) => {
                 timestamp: new Date().toISOString()
             });
         } catch (error) {
+            console.error('❌ Error obteniendo usuarios:', error);
             res.status(500).json({
                 success: false,
                 error: 'Error obteniendo administradores',
                 timestamp: new Date().toISOString()
             });
         }
-    });
+    } catch (error) {
+        return res.status(403).json({
+            success: false,
+            error: 'Token inválido o expirado. Haga login nuevamente.',
+            code: 'INVALID_TOKEN'
+        });
+    }
 });
 
 // Endpoint para logs (útil para debugging)
@@ -347,7 +348,7 @@ router.post('/log', verifyToken, (req, res) => {
  *                   type: string
  *                   example: NOT_ADMIN
  */
-router.get('/all-users', (req, res) => {
+router.get('/all-users', async (req, res) => {
     // VERIFICAR TOKEN OBLIGATORIO
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -362,17 +363,11 @@ router.get('/all-users', (req, res) => {
     
     // VERIFICAR TOKEN VÁLIDO
     const jwt = require('jsonwebtoken');
-    jwt.verify(token, process.env.JWT_SECRET || 'mirutinavisual-jwt-secret-2024', (err, user) => {
-        if (err) {
-            return res.status(403).json({
-                success: false,
-                error: 'Token inválido o expirado. Haga login nuevamente.',
-                code: 'INVALID_TOKEN'
-            });
-        }
+    try {
+        const user = jwt.verify(token, process.env.JWT_SECRET || 'mirutinavisual-jwt-secret-2024');
         
         // VERIFICAR QUE ES ADMIN
-        if (user.role !== 'admin' || user.email !== 'admin@mirutinavisual.com') {
+        if (user.role !== 'admin' && user.email !== 'admin@mirutinavisual.com') {
             return res.status(403).json({
                 success: false,
                 error: 'Acceso denegado. Solo administradores pueden ver todos los usuarios.',
@@ -382,40 +377,55 @@ router.get('/all-users', (req, res) => {
         
         // OBTENER SOLO USUARIOS REGULARES (NO ADMIN)
         const UserDatabase = require('../database/users');
-        const allUsers = UserDatabase.getAllUsers();
-        const regularUsers = allUsers.filter(u => u.role !== 'admin' && u.email !== 'admin@mirutinavisual.com');
-        const stats = UserDatabase.getStats();
         
-        console.log('👑 ADMIN VE SOLO USUARIOS REGULARES:', {
-            admin: user.email,
-            regular_users: regularUsers.length,
-            timestamp: new Date().toISOString()
-        });
-        
-        res.json({
-            success: true,
-            message: 'Lista de usuarios regulares del sistema (test, demo, etc.)',
-            admin_user: user.email,
-            total_regular_users: regularUsers.length,
-            regular_users: regularUsers.map(u => ({
-                id: u.id,
-                email: u.email,
-                name: u.name,
-                provider: u.provider,
-                role: u.role || 'user',
-                createdAt: u.createdAt,
-                isActive: u.isActive !== undefined ? u.isActive : true
-            })),
-            stats: {
-                total_users: stats.total_users,
-                admin_users: allUsers.filter(u => u.role === 'admin' || u.email === 'admin@mirutinavisual.com').length,
+        try {
+            const allUsers = await UserDatabase.getAllUsers();
+            const regularUsers = allUsers.filter(u => u.role !== 'admin' && u.email !== 'admin@mirutinavisual.com');
+            const stats = await UserDatabase.getStats();
+            
+            console.log('👑 ADMIN VE SOLO USUARIOS REGULARES:', {
+                admin: user.email,
                 regular_users: regularUsers.length,
-                active_users: stats.active_users,
-                created_today: stats.created_today
-            },
-            timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString()
+            });
+            
+            res.json({
+                success: true,
+                message: 'Lista de usuarios regulares del sistema (test, demo, etc.)',
+                admin_user: user.email,
+                total_regular_users: regularUsers.length,
+                regular_users: regularUsers.map(u => ({
+                    id: u.id,
+                    email: u.email,
+                    name: u.name,
+                    provider: u.provider,
+                    role: u.role || 'user',
+                    createdAt: u.createdAt,
+                    isActive: u.isActive !== undefined ? u.isActive : true
+                })),
+                stats: {
+                    total_users: stats.total_users,
+                    admin_users: allUsers.filter(u => u.role === 'admin' || u.email === 'admin@mirutinavisual.com').length,
+                    regular_users: regularUsers.length,
+                    active_users: stats.active_users,
+                    created_today: stats.created_today
+                },
+                timestamp: new Date().toISOString()
+            });
+        } catch (error) {
+            console.error('❌ Error obteniendo usuarios:', error);
+            res.status(500).json({
+                error: 'Error interno del servidor',
+                message: 'Algo salió mal'
+            });
+        }
+    } catch (error) {
+        return res.status(403).json({
+            success: false,
+            error: 'Token inválido o expirado. Haga login nuevamente.',
+            code: 'INVALID_TOKEN'
         });
-    });
+    }
 });
 
 module.exports = router;
