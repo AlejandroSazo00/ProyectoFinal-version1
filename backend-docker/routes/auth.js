@@ -154,7 +154,7 @@ router.get('/google/callback',
  *       409:
  *         description: Usuario ya existe
  */
-router.post('/register', (req, res) => {
+router.post('/register', async (req, res) => {
     try {
         const { email, password, name } = req.body;
         
@@ -174,7 +174,7 @@ router.post('/register', (req, res) => {
         }
         
         // Crear usuario
-        const newUser = UserDatabase.createUser({ email, password, name });
+        const newUser = await UserDatabase.createUser({ email, password, name });
         
         res.json({
             success: true,
@@ -224,7 +224,7 @@ router.post('/register', (req, res) => {
  *       400:
  *         description: Datos requeridos faltantes
  */
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         
@@ -237,7 +237,7 @@ router.post('/login', (req, res) => {
         }
         
         // RESPUESTA INMEDIATA: Buscar usuario
-        const user = UserDatabase.findByEmail(email);
+        const user = await UserDatabase.findByEmail(email);
         
         if (!user) {
             // RESPUESTA RÁPIDA - Usuario no existe
